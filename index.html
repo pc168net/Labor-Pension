@@ -2001,11 +2001,13 @@ function recalculate() {
   const selfMonthlyPension = selfAnnualPension / 12;
   const totalMonthlyIncome = selfMonthlyPension + totalPublicPensionMonthly;
 
-  // 5. Target Gap Analysis
+  // 5. Target Gap & Shortfall/Surplus Analysis
   const targetMonthlySelf = Math.max(0, targetMonthly - totalPublicPensionMonthly);
   const targetNestEgg = (targetMonthlySelf * 12) / (withdrawalRate / 100);
   const targetRatio = targetMonthly > 0 ? (totalMonthlyIncome / targetMonthly) * 100 : 100;
-  const assetGap = targetNestEgg - selfTotalAsset;
+  const assetGap = Math.max(0, targetNestEgg - selfTotalAsset);
+  const monthlyShortfall = Math.max(0, targetMonthly - totalMonthlyIncome);
+  const monthlySurplus = Math.max(0, totalMonthlyIncome - targetMonthly);
 
   // Update Top Metric Cards
   const realSuffix = isRealPurchasing ? ' (實質購買力)' : '';
@@ -2018,30 +2020,41 @@ function recalculate() {
     `勞保 ${formatNumberWithCommas(effectiveLaborInsMonthly)} + 勞退 ${formatNumberWithCommas(effectiveLaborPensionMonthly)} + 自主4% ${formatNumberWithCommas(selfMonthlyPension)}`;
 
   document.getElementById('dispTargetRatio').innerText = targetRatio.toFixed(0) + '%';
-  document.getElementById('dispTargetFundReq').innerText = `目標每月生活費 NT$ ${formatNumberWithCommas(targetMonthly)}`;
+  if (monthlyShortfall > 0) {
+    document.getElementById('dispTargetFundReq').innerText = `每月尚差 NT$ ${formatNumberWithCommas(monthlyShortfall)} 元 (已達成 ${targetRatio.toFixed(0)}%)`;
+  } else {
+    document.getElementById('dispTargetFundReq').innerText = `每月超額 +NT$ ${formatNumberWithCommas(monthlySurplus)} 元 (目標 NT$ ${formatNumberWithCommas(targetMonthly)})`;
+  }
 
   const ratioPill = document.getElementById('dispTargetRatioPill');
   const navPill = document.getElementById('navResultPill');
   if (targetRatio >= 100) {
     ratioPill.className = 'metric-pill pill-success';
-    ratioPill.innerText = '已超額達標';
+    ratioPill.innerText = `已超額達標 (${targetRatio.toFixed(0)}%)`;
     if (navPill) {
       navPill.className = 'metric-pill pill-success';
-      navPill.innerText = '已達標 (' + targetRatio.toFixed(0) + '%)';
+      navPill.innerText = `已達標 (${targetRatio.toFixed(0)}%)`;
+    }
+  } else if (targetRatio >= 90) {
+    ratioPill.className = 'metric-pill pill-warning';
+    ratioPill.innerText = `即將達標 (${targetRatio.toFixed(0)}%)`;
+    if (navPill) {
+      navPill.className = 'metric-pill pill-warning';
+      navPill.innerText = `達成率 ${targetRatio.toFixed(0)}% (差 ${formatNumberWithCommas(monthlyShortfall)}元)`;
     }
   } else if (targetRatio >= 75) {
     ratioPill.className = 'metric-pill pill-warning';
-    ratioPill.innerText = '接近目標';
+    ratioPill.innerText = `接近目標 (${targetRatio.toFixed(0)}%)`;
     if (navPill) {
       navPill.className = 'metric-pill pill-warning';
-      navPill.innerText = '差額 (' + targetRatio.toFixed(0) + '%)';
+      navPill.innerText = `達成率 ${targetRatio.toFixed(0)}% (差 ${formatNumberWithCommas(monthlyShortfall)}元)`;
     }
   } else {
     ratioPill.className = 'metric-pill pill-danger';
-    ratioPill.innerText = '尚有缺口';
+    ratioPill.innerText = `尚有缺口 (${targetRatio.toFixed(0)}%)`;
     if (navPill) {
       navPill.className = 'metric-pill pill-danger';
-      navPill.innerText = '有缺口 (' + targetRatio.toFixed(0) + '%)';
+      navPill.innerText = `達成率 ${targetRatio.toFixed(0)}% (差 ${formatNumberWithCommas(monthlyShortfall)}元)`;
     }
   }
 
@@ -2055,20 +2068,19 @@ function recalculate() {
   document.getElementById('pillDispLaborPension').innerText = 'NT$ ' + formatNumberWithCommas(effectiveLaborPensionMonthly);
   document.getElementById('pillDispSelf4p').innerText = 'NT$ ' + formatNumberWithCommas(selfMonthlyPension);
 
-  document.getElementById('progCurrentText').innerText = formatCurrencyWan(selfTotalAsset);
-  document.getElementById('progTargetText').innerText = formatCurrencyWan(targetNestEgg);
+  document.getElementById('progCurrentText').innerText = `預估月領 NT$ ${formatNumberWithCommas(totalMonthlyIncome)} (自籌本金資產 ${formatCurrencyWan(selfTotalAsset)})`;
+  document.getElementById('progTargetText').innerText = `目標月領 NT$ ${formatNumberWithCommas(targetMonthly)} (自籌門檻 ${formatCurrencyWan(targetNestEgg)})`;
   
-  const selfAssetRatio = targetNestEgg > 0 ? (selfTotalAsset / targetNestEgg) * 100 : 100;
-  const progressPercent = Math.min(100, Math.max(0, selfAssetRatio));
+  const progressPercent = Math.min(100, Math.max(0, targetRatio));
   document.getElementById('progressBarFill').style.width = progressPercent + '%';
 
   const badge = document.getElementById('gapStatusBadge');
-  if (assetGap <= 0) {
+  if (monthlyShortfall === 0) {
     badge.className = 'gap-status-badge badge-reached';
-    badge.innerHTML = '<span>🎉 自主目標已超額達成 ' + formatCurrencyWan(Math.abs(assetGap)) + '</span>';
+    badge.innerHTML = `<span>🎉 生活費已超額達標 (+NT$ ${formatNumberWithCommas(monthlySurplus)}/月)</span>`;
   } else {
     badge.className = 'gap-status-badge badge-shortage';
-    badge.innerHTML = '<span>⚠️ 自主資產還缺少 ' + formatCurrencyWan(assetGap) + '</span>';
+    badge.innerHTML = `<span>⚠️ 每月生活費尚差 NT$ ${formatNumberWithCommas(monthlyShortfall)} 元 (達成率 ${targetRatio.toFixed(0)}%，自籌資產缺口 ${formatCurrencyWan(assetGap)})</span>`;
   }
 
   // Strategy Analysis (方案 A、B、C 反推計算)
