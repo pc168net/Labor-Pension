@@ -129,6 +129,76 @@
       box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
     }
 
+    /* Main Planning Stage Switcher (退休前 vs 退休後 主分頁切換) */
+    .stage-switcher-container {
+      display: flex;
+      justify-content: center;
+      margin: 22px 0 20px 0;
+    }
+
+    .stage-nav-pill {
+      display: inline-flex;
+      background: #e2e8f0;
+      padding: 6px;
+      border-radius: 16px;
+      gap: 6px;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
+      max-width: 100%;
+    }
+
+    .stage-tab-btn {
+      padding: 12px 28px;
+      border: none;
+      background: transparent;
+      border-radius: 12px;
+      font-size: 1.08rem;
+      font-weight: 800;
+      color: var(--slate-600);
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+    }
+
+    .stage-tab-btn:hover {
+      color: var(--slate-900);
+    }
+
+    .stage-tab-btn.active {
+      background: white;
+      color: var(--primary);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    }
+
+    .stage-tab-btn.active.post-retire-theme {
+      color: #0f766e;
+    }
+
+    .stage-badge {
+      font-size: 0.76rem;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      background: var(--slate-200);
+      color: var(--slate-700);
+      font-weight: 700;
+    }
+
+    .stage-tab-btn.active .stage-badge {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .stage-tab-btn.active.post-retire-theme .stage-badge {
+      background: #ccfbf1;
+      color: #0f766e;
+    }
+
+    .stage-content-block.hidden-stage {
+      display: none !important;
+    }
+
     /* Preset Buttons */
     .preset-bar {
       display: flex;
@@ -330,6 +400,43 @@
       user-select: none;
       background: transparent;
       flex-shrink: 0;
+    }
+
+    /* Custom styling for Select Dropdowns */
+    .input-group select,
+    .select-full {
+      width: 100%;
+      border: none;
+      outline: none;
+      padding: 10px 14px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--slate-800);
+      background: white;
+      cursor: pointer;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      border-radius: 10px;
+    }
+
+    .scenario-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 16px;
+      margin-bottom: 18px;
+      background: var(--slate-50);
+      padding: 16px;
+      border-radius: 12px;
+      border: 1.5px solid var(--slate-200);
+    }
+
+    .scenario-item-label {
+      font-size: 0.95rem;
+      font-weight: 800;
+      display: block;
+      margin-bottom: 6px;
+      line-height: 1.45;
+      word-break: break-word;
     }
 
     .section-divider {
@@ -930,6 +1037,20 @@
       <button class="preset-btn" onclick="applyPreset('mature')">🎯 50歲衝刺 (勞保25年/本金300萬)</button>
       <button class="preset-btn" onclick="applyPreset('fire')">🔥 30歲極速 FIRE (月存4.5萬/50歲退休)</button>
     </div>
+
+    <!-- MAIN PLANNING STAGE SWITCHER (兩大核心階段切換：退休前資產積累 vs 退休後提領存活) -->
+    <div class="stage-switcher-container">
+      <div class="stage-nav-pill">
+        <button class="stage-tab-btn active" id="btnStagePreRetire" onclick="switchMainStage('pre')">
+          <span>🚀 第一階段：退休前「累積期」規劃</span>
+          <span class="stage-badge">勞保 • 勞退 • 4%累積</span>
+        </button>
+        <button class="stage-tab-btn" id="btnStagePostRetire" onclick="switchMainStage('post')">
+          <span>⏳ 第二階段：退休後「提領期」存活精算</span>
+          <span class="stage-badge">不再投入 • 醫療長照 • 能領多久</span>
+        </button>
+      </div>
+    </div>
   </header>
 
   <!-- Mobile Sticky View Switcher (手機專用快速切換) -->
@@ -1015,7 +1136,18 @@
             </div>
           </div>
 
-          <!-- Inflation Rate & Purchasing Power Toggle -->
+          <!-- Inflation Equivalent Display Box -->
+          <div style="background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 10px; padding: 12px 14px; margin: 14px 0 16px 0;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px;">
+              <span style="font-size:0.95rem; font-weight:700; color:#92400e;">💡 <span id="hintYearsTitle">30</span> 年後通膨換算 (未來應達月領)：</span>
+              <strong id="futureInflatedMonthlyText" style="color:#b45309; font-size:1.25rem;">NT$ 108,682 元/月</strong>
+            </div>
+            <div style="font-size:0.86rem; color:#78350f; margin-top:4px; line-height:1.5;">
+              以年通膨 <span id="hintInflationRateText" style="font-weight:700;">2.0%</span> 計算，<span id="hintYearsText" style="font-weight:700;">30</span> 年後物價將膨脹 <strong id="hintInflationFactorText" style="color:#b45309;">1.81 倍</strong>！意即 <span id="hintYearsExplainText" style="font-weight:700;">30</span> 年後的 <strong id="hintFutureValWanText" style="color:#b45309;">10.8 萬</strong>，才買得起「現在 <span id="hintPresentTargetText">60,000</span> 元」的生活品質。
+            </div>
+          </div>
+
+          <!-- Inflation Rate & Calculation Mode Toggle -->
           <div class="form-group">
             <div class="label-row">
               <label for="inflationRate">預估年通貨膨脹率</label>
@@ -1030,11 +1162,34 @@
                 <span class="unit">%</span>
               </div>
             </div>
-            <div style="margin-top: 10px; display: flex; align-items: center; gap: 8px;">
-              <input type="checkbox" id="enableRealPurchasing" onchange="recalculate();" style="cursor:pointer; width:18px; height:18px;">
-              <label for="enableRealPurchasing" style="font-size:0.95rem; font-weight:700; cursor:pointer; color:var(--slate-700);">
-                切換為「實質購買力」模式 (扣除通膨折現)
-              </label>
+
+            <!-- Inflation Target Mode Selection -->
+            <div style="margin-top: 14px; background: #f8fafc; border: 1.5px solid var(--slate-200); border-radius: 12px; padding: 12px 14px;">
+              <div style="display: flex; align-items: flex-start; gap: 10px;">
+                <input type="checkbox" id="applyInflatedTarget" onchange="handleInflationModeChange('nominal');" style="cursor:pointer; width:20px; height:20px; margin-top:2px; flex-shrink:0;">
+                <div style="flex:1;">
+                  <label for="applyInflatedTarget" style="font-size:0.98rem; font-weight:800; cursor:pointer; color:var(--slate-900); display:block;">
+                    🎯 以「通貨膨脹後的未來金額」計算達成率與缺口
+                  </label>
+                  <div style="font-size:0.86rem; color:var(--slate-600); margin-top:3px; line-height:1.45;">
+                    啟用後，目標生活費將由現在的 <span id="modePresentValText" style="font-weight:700; color:#b45309;">60,000</span> 自動調升為未來名目需求 <strong id="modeFutureValText" style="color:#b45309;">108,682 元/月</strong>，重新評估達成率與各項策略。
+                  </div>
+                </div>
+              </div>
+
+              <div class="section-divider" style="margin: 10px 0;"></div>
+
+              <div style="display: flex; align-items: flex-start; gap: 10px;">
+                <input type="checkbox" id="enableRealPurchasing" onchange="handleInflationModeChange('real');" style="cursor:pointer; width:20px; height:20px; margin-top:2px; flex-shrink:0;">
+                <div style="flex:1;">
+                  <label for="enableRealPurchasing" style="font-size:0.95rem; font-weight:700; cursor:pointer; color:var(--slate-700); display:block;">
+                    或切換為「實質購買力折現法」(固定現在金額，由報酬率扣減通膨)
+                  </label>
+                  <div style="font-size:0.84rem; color:var(--slate-500); margin-top:2px; line-height:1.4;">
+                    維持目前生活費數額，由系統將投資報酬率扣除通膨率進行折現計算。
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1442,11 +1597,26 @@
             </div>
           </div>
 
+          <!-- Quick Navigation Banner to Stage 2 (退休後提領存活精算) -->
+          <div style="margin-top: 18px; background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border: 1.5px solid #a7f3d0; border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <div style="font-weight: 800; color: #065f46; font-size: 1.02rem;">
+                🎯 想要檢視「退休後不再增加投資與投保，資產能花多久」？
+              </div>
+              <div style="font-size: 0.88rem; color: #047857; margin-top: 2px;">
+                切換至第二階段，精算扣除醫療重疾備用金、80歲長照看護後的水庫真實存活壽命。
+              </div>
+            </div>
+            <button class="preset-btn" onclick="switchMainStage('post')" style="background: #0f766e; color: white; border: none; font-weight: 800; padding: 8px 18px; box-shadow: 0 2px 6px rgba(15,118,110,0.3);">
+              進入「退休後提領精算」➔
+            </button>
+          </div>
+
         </div>
       </div>
 
-      <!-- ASSET ACCUMULATION CHART -->
-      <div class="card">
+      <!-- ASSET ACCUMULATION CHART (退休前專屬) -->
+      <div class="card stage-pre-element" id="growthChartCard">
         <div class="card-header">
           <div class="card-title">
             <span>📈</span> 資產增長軌跡與複利爆發點 (含勞退水庫)
@@ -1496,8 +1666,155 @@
         </div>
       </div>
 
-      <!-- SENSITIVITY MATRIX (定期定額 vs 年化報酬率 對照表) -->
-      <div class="card">
+      <!-- RETIREMENT DRAWDOWN SIMULATOR (退休後專屬模組) -->
+      <div class="card stage-post-element hidden-stage" id="retirementDrawdownCard" style="border: 2px solid #0d9488; background: #ffffff;">
+        <div class="card-header" style="background: linear-gradient(135deg, #0f766e 0%, #115e59 100%); color: white;">
+          <div class="card-title" style="color: white;">
+            <span>⏳</span> 第二階段：退休後提領存活精算（不再投資/投保，資產能花多久？）
+          </div>
+          <span style="font-size:0.82rem; background:rgba(255,255,255,0.22); color:white; padding:4px 12px; border-radius:9999px; font-weight:700;">真實人生提領模擬</span>
+        </div>
+        <div class="card-body">
+          <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 16px;">
+            <div style="font-size: 0.96rem; color: var(--slate-700); line-height: 1.6;">
+              💡 <strong>提領情境說明：</strong>
+              退休後<strong>停止所有投入與保險投保</strong>。
+              第一層<strong>勞保老年年金</strong>為政府法定社會保險（活到幾歲領到幾歲，終身不中斷且隨物價調整）；
+              第二層<strong>勞退新制專戶</strong>依平均餘命攤提（約領至 84 歲）；
+              剩餘不足的生活費，由退休時累積的<strong>「自主投資資產水庫」</strong>提領支應。
+            </div>
+          </div>
+
+          <!-- Scenario Parameters (清晰雙排自適應容器，徹底解決斷行與不完整) -->
+          <div class="scenario-grid">
+            <div style="min-width:0;">
+              <label for="postRetireReturn" class="scenario-item-label" style="color:var(--slate-800);">
+                📈 退休後「已存本金」年化獲利率：
+              </label>
+              <div class="input-group" style="width: 100%; min-height: 46px;">
+                <select id="postRetireReturn" class="select-full" onchange="recalculate();">
+                  <option value="0.0">0.0% (純放現金/保險箱無息)</option>
+                  <option value="1.5">1.5% (大額銀行定期存單)</option>
+                  <option value="3.0">3.0% (防禦型：短期公債/高評等債)</option>
+                  <option value="4.5" selected>4.5% (股債平衡：35%股票 + 65%債券)</option>
+                  <option value="6.0">6.0% (成長防禦：50%指數ETF + 50%債)</option>
+                  <option value="7.0">7.0% (指數股票：VT / 0050 長期獲利)</option>
+                </select>
+              </div>
+              <div style="font-size:0.82rem; color:var(--slate-500); margin-top:4px;">💡 不再存入新資金，靠已累積本金孳息對抗提領消耗。</div>
+            </div>
+
+            <div style="min-width:0;">
+              <label for="postRetireAdjustInflation" class="scenario-item-label" style="color:var(--slate-800);">
+                🍞 日常生活提領是否隨通膨調升：
+              </label>
+              <div class="input-group" style="width: 100%; min-height: 46px;">
+                <select id="postRetireAdjustInflation" class="select-full" onchange="recalculate();">
+                  <option value="yes" selected>每年隨通膨調升 (維持實質購買力)</option>
+                  <option value="no">固定金額提領 (不抗通膨，生活費實質縮減)</option>
+                </select>
+              </div>
+              <div style="font-size:0.82rem; color:var(--slate-500); margin-top:4px;">💡 勞保老年年金依法定機制自動隨物價指數調增。</div>
+            </div>
+
+            <!-- Medical Emergency Reserve (獨立專款專用醫療準備金) -->
+            <div style="min-width:0;">
+              <label for="medReserveWan" class="scenario-item-label" style="color:#92400e;">
+                🏥 預扣醫療防癌備用金 (專款隔離)：
+              </label>
+              <div class="input-group" style="width: 100%; min-height: 46px; border-color:#fde68a;">
+                <select id="medReserveWan" class="select-full" onchange="recalculate();">
+                  <option value="0">NT$ 0 萬 (無預留，全額用於日常提領)</option>
+                  <option value="100">NT$ 100 萬 (重大手術自費基礎備用池)</option>
+                  <option value="200" selected>NT$ 200 萬 (癌症標靶藥物/自費標準防護)</option>
+                  <option value="300">NT$ 300 萬 (高規格專屬雙人醫療防護池)</option>
+                </select>
+              </div>
+              <div style="font-size:0.82rem; color:#92400e; margin-top:4px;">💡 自水庫優先鎖定隔離，不可挪作日常生活花費。</div>
+            </div>
+
+            <!-- Late-life Long-term Care Stage (高齡長照安養準備) -->
+            <div style="min-width:0;">
+              <label for="ltcPlan" class="scenario-item-label" style="color:#6b21a8;">
+                ♿ 80 歲後長照/看護預估每月額外支出：
+              </label>
+              <div class="input-group" style="width: 100%; min-height: 46px; border-color:#ddd6fe;">
+                <select id="ltcPlan" class="select-full" onchange="recalculate();">
+                  <option value="0">無額外長照支出 (健康終老 / 依靠長照2.0)</option>
+                  <option value="35000" selected>+3.5 萬/月 (外籍看護費＋營養耗材)</option>
+                  <option value="50000">+5.0 萬/月 (優質安養長照機構月費)</option>
+                  <option value="70000">+7.0 萬/月 (全日專屬台籍看護照護)</option>
+                </select>
+              </div>
+              <div style="font-size:0.82rem; color:#6b21a8; margin-top:4px;">💡 衛福部統計：國人平均不健康存活期約 7.3 年。</div>
+            </div>
+          </div>
+
+          <!-- Simulation Results Cards -->
+          <div class="metric-grid" style="grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px;">
+            <div class="metric-card" style="background:#f8fafc; border:1.5px solid var(--slate-200); padding:14px;">
+              <div class="metric-title" style="font-size:0.88rem;">退休起始自籌水庫</div>
+              <div class="metric-value" id="simStartingNestEgg" style="font-size:1.35rem; color:var(--primary); margin:4px 0;">NT$ 3,124 萬</div>
+              <div class="metric-sub" id="simStartingDesc" style="font-size:0.82rem;">退休那一年可動用之自備本金+複利</div>
+            </div>
+
+            <div class="metric-card" style="background:#f8fafc; border:1.5px solid var(--slate-200); padding:14px;">
+              <div class="metric-title" style="font-size:0.88rem;">每月需由水庫提領</div>
+              <div class="metric-value" id="simNetMonthlyWithdraw" style="font-size:1.35rem; color:#b45309; margin:4px 0;">NT$ 9,473</div>
+              <div class="metric-sub" id="simWithdrawDesc" style="font-size:0.82rem;">扣除勞保與勞退後之淨缺口</div>
+            </div>
+
+            <div class="metric-card" style="background:#eff6ff; border:1.5px solid #bfdbfe; padding:14px;">
+              <div class="metric-title" style="font-size:0.88rem; color:#1e40af;">自備資產預估可支撐</div>
+              <div class="metric-value" id="simSurvivalYears" style="font-size:1.45rem; color:var(--primary); margin:4px 0;">永續無虞 (100歲+)</div>
+              <div class="metric-sub" id="simSurvivalAge" style="font-size:0.82rem; color:#1e40af; font-weight:700;">活到 100 歲以上資產仍有餘裕</div>
+            </div>
+          </div>
+
+          <!-- Dynamic Timeline Bar & Verdict -->
+          <div id="simVerdictBox" style="background: #ecfdf5; border: 1.5px solid #a7f3d0; border-radius: 10px; padding: 14px; margin-bottom: 14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+              <strong id="simVerdictTitle" style="color: #065f46; font-size:1.05rem;">🎉 恭喜！自備資產在您有生之年完全花不完</strong>
+              <span id="simVerdictBadge" class="metric-pill pill-success" style="font-size:0.85rem;">終身安全</span>
+            </div>
+            <div id="simVerdictDetail" style="font-size:0.92rem; color: #047857; margin-top:6px; line-height:1.55;">
+              在勞保終身年金（約 24,847 元/月）與勞退月退的基礎保護下，您退休自備的資產足以覆蓋物價通膨至 85 歲以上甚至傳承給下一代。
+            </div>
+          </div>
+
+          <!-- Quick Return Rates Comparison Table -->
+          <div style="background: white; border: 1px solid var(--slate-200); border-radius: 10px; padding: 12px; margin-top: 10px;">
+            <div style="font-size:0.92rem; font-weight:800; color:var(--slate-800); margin-bottom:8px; display:flex; justify-content:space-between;">
+              <span>📊 不同「退休後獲利率」對水庫壽命的影響對照（不再投入，僅靠已累積本金孳息）：</span>
+            </div>
+            <div class="table-responsive">
+              <table style="font-size:0.88rem; min-width:480px;">
+                <thead>
+                  <tr>
+                    <th style="text-align:left;">退休後資產年化獲利率</th>
+                    <th style="text-align:center;">水庫預估可支撐年限</th>
+                    <th style="text-align:center;">預估可領至幾歲</th>
+                    <th style="text-align:right;">評估結果</th>
+                  </tr>
+                </thead>
+                <tbody id="simRatesComparisonTbody">
+                  <!-- Dynamically generated comparison rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Return to Stage 1 button -->
+          <div style="margin-top: 16px; text-align: center;">
+            <button class="preset-btn" onclick="switchMainStage('pre')" style="background: white; border: 1.5px solid #0d9488; color: #0f766e; font-weight: 800; padding: 10px 24px;">
+              ⬅️ 返回「第一階段：退休前累積期規劃」調整本金與月存
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SENSITIVITY MATRIX (定期定額 vs 年化報酬率 對照表，退休前專屬) -->
+      <div class="card stage-pre-element" id="sensitivityMatrixCard">
         <div class="card-header">
           <div class="card-title">
             <span>📊</span> 敏感度決策矩陣：不同「自主月投入」與「報酬率」下的每月總退休金
@@ -1615,6 +1932,42 @@ const PRESETS = {
     withdrawalRate: 3.5
   }
 };
+
+// --- Main Planning Stage Switching (退休前 vs 退休後 主分頁切換) ---
+let currentMainStage = 'pre';
+
+function switchMainStage(stage) {
+  currentMainStage = stage;
+  const btnPre = document.getElementById('btnStagePreRetire');
+  const btnPost = document.getElementById('btnStagePostRetire');
+  const preElements = document.querySelectorAll('.stage-pre-element');
+  const postElements = document.querySelectorAll('.stage-post-element');
+
+  if (stage === 'pre') {
+    if (btnPre) btnPre.classList.add('active');
+    if (btnPost) {
+      btnPost.classList.remove('active');
+      btnPost.classList.remove('post-retire-theme');
+    }
+    preElements.forEach(el => el.classList.remove('hidden-stage'));
+    postElements.forEach(el => el.classList.add('hidden-stage'));
+    setTimeout(recalculateChartOnly, 50);
+  } else if (stage === 'post') {
+    if (btnPre) btnPre.classList.remove('active');
+    if (btnPost) {
+      btnPost.classList.add('active');
+      btnPost.classList.add('post-retire-theme');
+    }
+    preElements.forEach(el => el.classList.add('hidden-stage'));
+    postElements.forEach(el => el.classList.remove('hidden-stage'));
+    
+    // Smooth scroll to the drawdown simulator
+    const drawCard = document.getElementById('retirementDrawdownCard');
+    if (drawCard) {
+      drawCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+}
 
 // --- Mobile Tab Switching ---
 function switchMobileView(view) {
@@ -1923,6 +2276,19 @@ function solveRequiredYears(PV, PMT, annualRate, targetFV) {
   return 60;
 }
 
+// Handle mutual exclusion / toggle between inflation modes
+function handleInflationModeChange(mode) {
+  const applyInflated = document.getElementById('applyInflatedTarget');
+  const enableReal = document.getElementById('enableRealPurchasing');
+
+  if (mode === 'nominal' && applyInflated.checked) {
+    if (enableReal) enableReal.checked = false;
+  } else if (mode === 'real' && enableReal.checked) {
+    if (applyInflated) applyInflated.checked = false;
+  }
+  recalculate();
+}
+
 // --- Main Dynamic Recalculation Engine ---
 function recalculate() {
   const currentAge = parseInt(document.getElementById('currentAge').value);
@@ -1940,9 +2306,38 @@ function recalculate() {
   document.getElementById('retireAssetPill').innerText = accumYears + '年後 (滿' + retireAge + '歲)';
 
   // Read Inputs
-  const targetMonthly = parseFormattedNumber(document.getElementById('targetMonthlyNum').value);
+  const baseTargetMonthly = parseFormattedNumber(document.getElementById('targetMonthlyNum').value);
   const inflationRate = parseFloat(document.getElementById('inflationRate').value) || 0;
-  const isRealPurchasing = document.getElementById('enableRealPurchasing').checked;
+  const applyInflatedTarget = document.getElementById('applyInflatedTarget') && document.getElementById('applyInflatedTarget').checked;
+  const isRealPurchasing = document.getElementById('enableRealPurchasing') && document.getElementById('enableRealPurchasing').checked;
+
+  // Dynamic Future Inflation Equivalent Calculation
+  const inflationFactor = Math.pow(1 + inflationRate / 100, accumYears);
+  const futureInflatedMonthly = baseTargetMonthly * inflationFactor;
+  const hintYearsTitle = document.getElementById('hintYearsTitle');
+  if (hintYearsTitle) {
+    hintYearsTitle.innerText = accumYears;
+    document.getElementById('futureInflatedMonthlyText').innerText = 'NT$ ' + formatNumberWithCommas(futureInflatedMonthly) + ' 元/月';
+    document.getElementById('hintInflationRateText').innerText = inflationRate.toFixed(1) + '%';
+    document.getElementById('hintYearsText').innerText = accumYears;
+    document.getElementById('hintInflationFactorText').innerText = inflationFactor.toFixed(2) + ' 倍';
+    const hintYearsExplain = document.getElementById('hintYearsExplainText');
+    if (hintYearsExplain) hintYearsExplain.innerText = accumYears;
+    const hintFutureWan = document.getElementById('hintFutureValWanText');
+    if (hintFutureWan) hintFutureWan.innerText = (futureInflatedMonthly / 10000).toFixed(1) + ' 萬';
+    const hintPresentTarget = document.getElementById('hintPresentTargetText');
+    if (hintPresentTarget) hintPresentTarget.innerText = formatNumberWithCommas(baseTargetMonthly);
+  }
+
+  const modePresentValText = document.getElementById('modePresentValText');
+  if (modePresentValText) {
+    modePresentValText.innerText = formatNumberWithCommas(baseTargetMonthly);
+    document.getElementById('modeFutureValText').innerText = formatNumberWithCommas(futureInflatedMonthly) + ' 元/月';
+  }
+
+  // Determine Effective Target Monthly living cost: Present vs Future Nominal
+  const targetMonthly = applyInflatedTarget ? futureInflatedMonthly : baseTargetMonthly;
+  const targetModeBadgeText = applyInflatedTarget ? ' (通膨後名目)' : (isRealPurchasing ? ' (實質購買力)' : ' (現值)');
 
   // 1. Calculate Labor Insurance (勞保老年年金)
   const laborInsSalary = parseFormattedNumber(document.getElementById('laborInsSalaryNum').value);
@@ -2010,7 +2405,7 @@ function recalculate() {
   const monthlySurplus = Math.max(0, totalMonthlyIncome - targetMonthly);
 
   // Update Top Metric Cards
-  const realSuffix = isRealPurchasing ? ' (實質購買力)' : '';
+  const realSuffix = isRealPurchasing ? ' (實質折現)' : '';
   document.getElementById('dispTotalAsset').innerText = formatCurrencyWan(combinedTotalAsset) + realSuffix;
   document.getElementById('dispTotalAssetDetail').innerText = 
     `自主投資 ${formatTenThousand(selfTotalAsset)} + 勞退專戶 ${formatTenThousand(laborPensionResult.totalFund)}`;
@@ -2021,37 +2416,39 @@ function recalculate() {
 
   document.getElementById('dispTargetRatio').innerText = targetRatio.toFixed(0) + '%';
   if (monthlyShortfall > 0) {
-    document.getElementById('dispTargetFundReq').innerText = `每月尚差 NT$ ${formatNumberWithCommas(monthlyShortfall)} 元 (已達成 ${targetRatio.toFixed(0)}%)`;
+    document.getElementById('dispTargetFundReq').innerText = `每月尚差 NT$ ${formatNumberWithCommas(monthlyShortfall)} 元 (目標 NT$ ${formatNumberWithCommas(targetMonthly)}${targetModeBadgeText})`;
   } else {
-    document.getElementById('dispTargetFundReq').innerText = `每月超額 +NT$ ${formatNumberWithCommas(monthlySurplus)} 元 (目標 NT$ ${formatNumberWithCommas(targetMonthly)})`;
+    document.getElementById('dispTargetFundReq').innerText = `每月超額 +NT$ ${formatNumberWithCommas(monthlySurplus)} 元 (目標 NT$ ${formatNumberWithCommas(targetMonthly)}${targetModeBadgeText})`;
   }
 
   const ratioPill = document.getElementById('dispTargetRatioPill');
   const navPill = document.getElementById('navResultPill');
+  const shortfallPercent = Math.max(0, 100 - targetRatio).toFixed(0);
   if (targetRatio >= 100) {
+    const surplusPercent = (targetRatio - 100).toFixed(0);
     ratioPill.className = 'metric-pill pill-success';
-    ratioPill.innerText = `已超額達標 (${targetRatio.toFixed(0)}%)`;
+    ratioPill.innerText = `已超額達標 (${targetRatio.toFixed(0)}% / +${surplusPercent}%)`;
     if (navPill) {
       navPill.className = 'metric-pill pill-success';
       navPill.innerText = `已達標 (${targetRatio.toFixed(0)}%)`;
     }
   } else if (targetRatio >= 90) {
     ratioPill.className = 'metric-pill pill-warning';
-    ratioPill.innerText = `即將達標 (${targetRatio.toFixed(0)}%)`;
+    ratioPill.innerText = `即將達標 ${targetRatio.toFixed(0)}% (尚差 ${shortfallPercent}%)`;
     if (navPill) {
       navPill.className = 'metric-pill pill-warning';
       navPill.innerText = `達成率 ${targetRatio.toFixed(0)}% (差 ${formatNumberWithCommas(monthlyShortfall)}元)`;
     }
   } else if (targetRatio >= 75) {
     ratioPill.className = 'metric-pill pill-warning';
-    ratioPill.innerText = `接近目標 (${targetRatio.toFixed(0)}%)`;
+    ratioPill.innerText = `達成率 ${targetRatio.toFixed(0)}% (尚差 ${shortfallPercent}%)`;
     if (navPill) {
       navPill.className = 'metric-pill pill-warning';
       navPill.innerText = `達成率 ${targetRatio.toFixed(0)}% (差 ${formatNumberWithCommas(monthlyShortfall)}元)`;
     }
   } else {
     ratioPill.className = 'metric-pill pill-danger';
-    ratioPill.innerText = `尚有缺口 (${targetRatio.toFixed(0)}%)`;
+    ratioPill.innerText = `達成率 ${targetRatio.toFixed(0)}% (缺口 ${shortfallPercent}%)`;
     if (navPill) {
       navPill.className = 'metric-pill pill-danger';
       navPill.innerText = `達成率 ${targetRatio.toFixed(0)}% (差 ${formatNumberWithCommas(monthlyShortfall)}元)`;
@@ -2162,6 +2559,236 @@ function recalculate() {
   // Render Charts & Matrix Table
   renderTrajectoryChart(currentAge, retireAge, initialCapital, monthlySaving, calcRate, targetNestEgg, laborSalary, laborVoluntaryRate, laborCurrentFund, laborFundRate, salaryGrowth);
   renderSensitivityMatrix(accumYears, initialCapital, monthlySaving, calcRate, withdrawalRate, targetMonthly, totalPublicPensionMonthly);
+
+  // Render Post-Retirement Drawdown Survival Simulation
+  simulateRetirementDrawdown(retireAge, selfTotalAsset, targetMonthly, effectiveLaborInsMonthly, effectiveLaborPensionMonthly, inflationRate);
+}
+
+// --- Retirement Drawdown Survival Simulation Engine ---
+function simulateRetirementDrawdown(retireAge, nestEgg, initialTargetMonthly, laborInsMonthly, laborPensionMonthly, inflationRate) {
+  const returnSelect = document.getElementById('postRetireReturn');
+  const postReturnRate = returnSelect ? parseFloat(returnSelect.value) : 4.5;
+  const adjustInflSelect = document.getElementById('postRetireAdjustInflation');
+  const adjustInflation = adjustInflSelect ? (adjustInflSelect.value === 'yes') : true;
+
+  const medReserveSelect = document.getElementById('medReserveWan');
+  const medReserveWan = medReserveSelect ? parseFloat(medReserveSelect.value) : 200;
+  const medReserveAmount = medReserveWan * 10000;
+
+  const ltcSelect = document.getElementById('ltcPlan');
+  const ltcBaseMonthly = ltcSelect ? parseFloat(ltcSelect.value) : 35000;
+
+  const simStartingNestEgg = document.getElementById('simStartingNestEgg');
+  if (!simStartingNestEgg) return;
+
+  // Available nest egg for daily living after locking medical emergency fund
+  const availableLivingNestEgg = Math.max(0, nestEgg - medReserveAmount);
+  simStartingNestEgg.innerText = formatCurrencyWan(nestEgg);
+  
+  const startingDescEl = document.getElementById('simStartingDesc');
+  if (startingDescEl) {
+    if (medReserveWan > 0) {
+      startingDescEl.innerHTML = `已扣留醫療備用金 <strong>${medReserveWan} 萬</strong>，日常生活提領水庫 <strong>${formatCurrencyWan(availableLivingNestEgg)}</strong>`;
+    } else {
+      startingDescEl.innerText = `全額用於生活提領 (未預留專用醫療金)`;
+    }
+  }
+
+  // Initial gap that must be paid from nest egg
+  const initialPublicMonthly = laborInsMonthly + laborPensionMonthly;
+  const initialNetMonthlyFromNestEgg = Math.max(0, initialTargetMonthly - initialPublicMonthly);
+  document.getElementById('simNetMonthlyWithdraw').innerText = 'NT$ ' + formatNumberWithCommas(initialNetMonthlyFromNestEgg) + ' 元/月';
+  
+  if (initialNetMonthlyFromNestEgg <= 0 && ltcBaseMonthly === 0) {
+    document.getElementById('simWithdrawDesc').innerText = '勞保與勞退已全額涵蓋基礎生活費，自備水庫完整保全';
+    document.getElementById('simSurvivalYears').innerText = '終身永續 (100歲+)';
+    document.getElementById('simSurvivalAge').innerText = '公共年金已完全覆蓋，自籌資產完整保全';
+    const verdictBox = document.getElementById('simVerdictBox');
+    verdictBox.style.background = '#ecfdf5';
+    verdictBox.style.borderColor = '#a7f3d0';
+    document.getElementById('simVerdictTitle').style.color = '#065f46';
+    document.getElementById('simVerdictTitle').innerText = '🎉 雙公營年金已完全覆蓋生活費！自籌資產 100% 保全';
+    document.getElementById('simVerdictBadge').className = 'metric-pill pill-success';
+    document.getElementById('simVerdictBadge').innerText = '終身無虞';
+    document.getElementById('simVerdictDetail').style.color = '#047857';
+    document.getElementById('simVerdictDetail').innerHTML = 
+      `退休後<strong>勞保老年年金 (約 ${formatNumberWithCommas(laborInsMonthly)} 元)</strong> 與 <strong>勞退月退休金 (約 ${formatNumberWithCommas(laborPensionMonthly)} 元)</strong> 之和已高於您的目標月生活費，您的自籌資產水庫 <strong>${formatCurrencyWan(nestEgg)}</strong> 可以作為高額緊急備用金或直接傳承給家人。`;
+    return;
+  }
+
+  // Month-by-month simulation for up to 60 years (up to age 125)
+  const maxMonths = 60 * 12;
+  const monthlyReturn = Math.pow(1 + postReturnRate / 100, 1 / 12) - 1;
+  const monthlyInflation = adjustInflation ? (Math.pow(1 + inflationRate / 100, 1 / 12) - 1) : 0;
+
+  let currentNestEgg = availableLivingNestEgg;
+  let targetMonthlyCost = initialTargetMonthly;
+  let laborInsCost = laborInsMonthly;
+  let ltcMonthlyCost = ltcBaseMonthly;
+  let monthsSurvived = 0;
+  let ranOutOfMoney = false;
+
+  for (let m = 1; m <= maxMonths; m++) {
+    // Investment interest earned this month on remaining balance
+    currentNestEgg = currentNestEgg * (1 + monthlyReturn);
+
+    // Living cost inflation
+    if (adjustInflation && inflationRate > 0) {
+      targetMonthlyCost = targetMonthlyCost * (1 + monthlyInflation);
+      laborInsCost = laborInsCost * (1 + monthlyInflation);
+      ltcMonthlyCost = ltcMonthlyCost * (1 + monthlyInflation);
+    }
+
+    const currentAgeInSim = retireAge + m / 12;
+    // Labor Pension (paid until average life expectancy age 84, approx 228 months from age 65)
+    const currentLaborPension = (currentAgeInSim <= 84) ? laborPensionMonthly : 0;
+
+    // Late-life LTC addition (after age 80)
+    const currentLTCExpenditure = (currentAgeInSim >= 80) ? ltcMonthlyCost : 0;
+
+    // Total monthly expenditure required
+    const totalRequiredThisMonth = targetMonthlyCost + currentLTCExpenditure;
+
+    // Net withdrawal required from personal nest egg
+    const netWithdrawThisMonth = Math.max(0, totalRequiredThisMonth - laborInsCost - currentLaborPension);
+
+    if (currentNestEgg >= netWithdrawThisMonth) {
+      currentNestEgg -= netWithdrawThisMonth;
+      monthsSurvived = m;
+    } else {
+      // Depleted
+      monthsSurvived = m;
+      ranOutOfMoney = true;
+      break;
+    }
+  }
+
+  const yearsSurvived = Math.floor(monthsSurvived / 12);
+  const endAge = retireAge + yearsSurvived;
+
+  const survivalYearsEl = document.getElementById('simSurvivalYears');
+  const survivalAgeEl = document.getElementById('simSurvivalAge');
+  const verdictBox = document.getElementById('simVerdictBox');
+  const verdictTitle = document.getElementById('simVerdictTitle');
+  const verdictBadge = document.getElementById('simVerdictBadge');
+  const verdictDetail = document.getElementById('simVerdictDetail');
+
+  if (!ranOutOfMoney && yearsSurvived >= 50) {
+    survivalYearsEl.innerText = '永續無虞 (100歲+)';
+    survivalYearsEl.style.color = 'var(--success)';
+    survivalAgeEl.innerText = `活到 100 歲以上資產仍有 ${formatCurrencyWan(currentNestEgg)} 餘裕`;
+    verdictBox.style.background = '#ecfdf5';
+    verdictBox.style.borderColor = '#a7f3d0';
+    verdictTitle.style.color = '#065f46';
+    verdictTitle.innerText = '🎉 恭喜！自備資產在您有生之年完全花不完';
+    verdictBadge.className = 'metric-pill pill-success';
+    verdictBadge.innerText = '終身安全';
+    verdictDetail.style.color = '#047857';
+    verdictDetail.innerHTML = 
+      `在<strong>勞保終身年金（隨物價調升）</strong>與勞退的護城河下，扣除每月自付差額後，自籌水庫每年利息收益已大於或抵銷提領消耗，<strong>即便退休後完全不再投入或投保，活到 100 歲以上資產仍能保持充裕！</strong>`;
+  } else if (endAge >= 85) {
+    survivalYearsEl.innerText = `約可支撐 ${yearsSurvived} 年`;
+    survivalYearsEl.style.color = '#0284c7';
+    survivalAgeEl.innerText = `預估可領至 ${endAge} 歲 (超越台灣平均餘命 81 歲)`;
+    verdictBox.style.background = '#eff6ff';
+    verdictBox.style.borderColor = '#bfdbfe';
+    verdictTitle.style.color = '#1e40af';
+    verdictTitle.innerText = `🛡️ 安全覆蓋！自備資產可安穩支撐至 ${endAge} 歲`;
+    verdictBadge.className = 'metric-pill pill-success';
+    verdictBadge.innerText = '覆蓋高於平均餘命';
+    verdictDetail.style.color = '#1e3a8a';
+    verdictDetail.innerHTML = 
+      `自備退休水庫可在退休後支撐 <strong>${yearsSurvived} 年</strong>（直到約 <strong>${endAge} 歲</strong>）。台灣平均壽命約 80~81 歲，此規劃已具備健全長壽安全邊際。且 ${endAge} 歲之後，政府<strong>勞保年金依然每月持續發給</strong>，不致於完全無收入。`;
+  } else {
+    survivalYearsEl.innerText = `約可支撐 ${yearsSurvived} 年`;
+    survivalYearsEl.style.color = '#dc2626';
+    survivalAgeEl.innerText = `預估至 ${endAge} 歲時自籌水庫將耗盡`;
+    verdictBox.style.background = '#fef2f2';
+    verdictBox.style.borderColor = '#fecaca';
+    verdictTitle.style.color = '#991b1b';
+    verdictTitle.innerText = `⚠️ 提醒：自籌本金預估在約 ${endAge} 歲耗盡`;
+    verdictBadge.className = 'metric-pill pill-danger';
+    verdictBadge.innerText = '長壽風險';
+    verdictDetail.style.color = '#7f1d1d';
+      `退休後完全不投資（年化報酬低）或物價膨脹較高時，自籌水庫可能在 <strong>${endAge} 歲</strong> 提領用罄。耗盡後將僅剩<strong>勞保老年年金 (約 ${formatNumberWithCommas(laborInsCost)} 元/月)</strong> 支應。建議退休前適度增加定期定額，或退休後配置 3%~4% 的防禦型收息組合，即可大幅延長資產壽命。`;
+  }
+
+  // Generate Quick Return Rates Comparison Table rows
+  const comparisonTbody = document.getElementById('simRatesComparisonTbody');
+  if (comparisonTbody) {
+    const testRates = [
+      { rate: 0.0, label: '0.0% (純放現金/保險箱)' },
+      { rate: 1.5, label: '1.5% (大額銀行定存)' },
+      { rate: 3.0, label: '3.0% (短天期公債/高評等債)' },
+      { rate: 4.5, label: '4.5% (股債平衡配置)' },
+      { rate: 6.0, label: '6.0% (成長防禦配置)' },
+      { rate: 7.0, label: '7.0% (全球/台股指數ETF)' }
+    ];
+
+    let rowsHtml = '';
+    testRates.forEach(tr => {
+      const isSelected = Math.abs(tr.rate - postReturnRate) < 0.1;
+      let rNest = availableLivingNestEgg;
+      let rTarget = initialTargetMonthly;
+      let rLI = laborInsMonthly;
+      let rLTC = ltcBaseMonthly;
+      const rMonthlyReturn = Math.pow(1 + tr.rate / 100, 1 / 12) - 1;
+      let rMonths = 0;
+      let rRanOut = false;
+
+      for (let m = 1; m <= maxMonths; m++) {
+        rNest = rNest * (1 + rMonthlyReturn);
+        if (adjustInflation && inflationRate > 0) {
+          rTarget = rTarget * (1 + monthlyInflation);
+          rLI = rLI * (1 + monthlyInflation);
+          rLTC = rLTC * (1 + monthlyInflation);
+        }
+        const curAgeSim = retireAge + m / 12;
+        const curLP = (curAgeSim <= 84) ? laborPensionMonthly : 0;
+        const curLTCExp = (curAgeSim >= 80) ? rLTC : 0;
+        const rNetWithdraw = Math.max(0, rTarget + curLTCExp - rLI - curLP);
+
+        if (rNest >= rNetWithdraw) {
+          rNest -= rNetWithdraw;
+          rMonths = m;
+        } else {
+          rMonths = m;
+          rRanOut = true;
+          break;
+        }
+      }
+
+      const rYears = Math.floor(rMonths / 12);
+      const rEndAge = retireAge + rYears;
+      let durText = '';
+      let ageText = '';
+      let badgeHtml = '';
+
+      if (!rRanOut && rYears >= 50) {
+        durText = '<strong>永續無虞</strong> (50年以上)';
+        ageText = '<strong style="color:var(--success);">100歲以上 (終身安全)</strong>';
+        badgeHtml = '<span class="status-check" style="color:var(--success); font-weight:800;">✓ 花不完 / 可傳承</span>';
+      } else if (rEndAge >= 85) {
+        durText = `${rYears} 年`;
+        ageText = `約 ${rEndAge} 歲`;
+        badgeHtml = '<span style="color:#0284c7; font-weight:700;">✓ 超越平均餘命</span>';
+      } else {
+        durText = `${rYears} 年`;
+        ageText = `<span style="color:#dc2626; font-weight:700;">約 ${rEndAge} 歲</span>`;
+        badgeHtml = '<span style="color:#dc2626; font-weight:700;">⚠️ 晚年有缺口</span>';
+      }
+
+      rowsHtml += `
+        <tr style="${isSelected ? 'background:#eff6ff; font-weight:800;' : ''}">
+          <td style="text-align:left;">${tr.label} ${isSelected ? '<span style="color:var(--primary); font-size:0.8rem;">(目前選擇)</span>' : ''}</td>
+          <td style="text-align:center;">${durText}</td>
+          <td style="text-align:center;">${ageText}</td>
+          <td style="text-align:right;">${badgeHtml}</td>
+        </tr>
+      `;
+    });
+    comparisonTbody.innerHTML = rowsHtml;
+  }
 }
 
 // --- Interactive Chart Rendering (Fixed Retina infinite expansion) ---
@@ -2414,13 +3041,18 @@ canvasEl.addEventListener('touchend', function() {
 function recalculateChartOnly() {
   const currentAge = parseInt(document.getElementById('currentAge').value);
   const retireAge = parseInt(document.getElementById('retireAge').value);
+  const accumYears = retireAge - currentAge;
   const initialCapital = parseFormattedNumber(document.getElementById('initialCapitalNum').value);
   const monthlySaving = parseFormattedNumber(document.getElementById('monthlySavingNum').value);
   let returnRate = parseFloat(document.getElementById('returnRate').value) || 7.0;
-  const targetMonthly = parseFormattedNumber(document.getElementById('targetMonthlyNum').value);
+  const baseTargetMonthly = parseFormattedNumber(document.getElementById('targetMonthlyNum').value);
   const withdrawalRate = parseFloat(document.getElementById('withdrawalRate').value) || 4.0;
   const inflationRate = parseFloat(document.getElementById('inflationRate').value) || 0;
-  const isRealPurchasing = document.getElementById('enableRealPurchasing').checked;
+  const applyInflatedTarget = document.getElementById('applyInflatedTarget') && document.getElementById('applyInflatedTarget').checked;
+  const isRealPurchasing = document.getElementById('enableRealPurchasing') && document.getElementById('enableRealPurchasing').checked;
+
+  const inflationFactor = Math.pow(1 + inflationRate / 100, accumYears);
+  const targetMonthly = applyInflatedTarget ? (baseTargetMonthly * inflationFactor) : baseTargetMonthly;
 
   const laborSalary = parseFormattedNumber(document.getElementById('laborSalaryNum').value);
   const laborVoluntaryRate = parseFloat(document.getElementById('laborVoluntaryRate').value) || 0;
